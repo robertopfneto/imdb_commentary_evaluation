@@ -1,10 +1,12 @@
-import numpy as np, random, os # vetores, matrizes, recursos
+import numpy as np
 import tensorflow as tf # fornece os calculos que a rede neural precisa
 from keras.datasets import imdb # dataset
-from keras import models, optimizers, callbacks, layers
 
-import re # expressao regular
-from typing import List
+from classification_text import classify_text
+from model import build_model
+from vetorization import vet_sequence
+from keras import callbacks
+
 
 
 print("Tensorflow: ", tf.__version__)
@@ -29,17 +31,7 @@ print(f"Palavra index -> index: {list(work_index.items())[:10]}")
 reverse_word_index = {idx: word for word, idx in work_index.items()}
 print(f"Indice -> palavra: {list(reverse_word_index.items())[:10]}")
 
-# cada comentario vira uma linha com 10k de posições
-# a posição de uma palavra recebe: 1 - se estiver presente e 0 - se estiver ausente
-# Valores atribuidos na entrada e nao nos rotulos de sentimento; Se uma palavra se repete nao aumenta o valor   
 
-def vet_sequence(sequence, dimension=NUM_WORDS):
-    # cria uma linha por comentario e coluna por indice, inicialmente com zero
-    results = np.zeros((len(sequence), dimension), dtype="float32")      
-    for row, seq in enumerate(sequence):
-        seq = [i for i in seq if i < dimension]
-        results[row, seq] = 1 
-    return results
 
 # vetoriza o dataset
 x_train = vet_sequence(train_data)
@@ -50,21 +42,48 @@ y_train = np.asarray(train_labels, dtype="float32")
 y_test = np.asarray(test_labels, dtype="float32")
 
 
-## Configurações do modelo
+model = build_model()
 
-def build_model(input_data=NUM_WORDS):
-    model = models.Sequential([
-        # recebe os valores de 10.000 posições e vai combinar seus valores com 16 neuronios com a função
-        layers.Dense(16, activation="relu", input_shape=(input_data, )),  # relu remove os negativos
-        layers.Dense(16, activation="relu"),  # relu remove os negativos
-        # output
-        layers.dense(1, activation="sigmoid")
-    ])
+### Separar o conjundo de validação e Early Stopping
+
+# Dos 25k exemplos iniciais, 15k sao para treinamento e 10k para validacao
+# epoca, batch = 512 
+# Early Stopping: quantas épocas o modelo vai aguardar sem ter nenhuma melhora
+
+VAL_SIZE = 10000
+x_val, partial_x_train = x_train[:VAL_SIZE], x_train[VAL_SIZE:]
+
+y_val, partial_y_train = y_train[:VAL_SIZE], y_train[VAL_SIZE:]
+
+early_stopping = callbacks.EarlyStopping(
+    monitor="val_loss",
+    patience=3,
+    restore_best_weights=True
+)
+
+history = model.fit(
+    # fornece os 15k comentarios do treino -> partial_x_train
+    # e os routolos -> partial_y_train
+    partial_x_train, partial_y_train,
+    epochs=20,
+    batch_size=512,
     
-    model.compile(
-        optimizer=optimizers.RMSprop(learning_rate=0.001),
-        loss="binary_crossentropy",
-        metrics=["accuracy"]
-    )
+    # usa validação para acompanhar o desempenho,
+    validation_data = (x_val, y_val),
+    callbacks=[early_stopping],
     
-    return model
+    # exibe o progresso e as medidas de cada epoca
+    verbose=1  
+)
+
+
+### TESTAR MODELO
+
+# Classificar uma frase em ingles nova com a rede ja treinada
+# p = estimativa(0..1)
+# l = rótulo
+p, l = classify_text("I should have gone to see the Pelé movie")
+print(p, l)
+
+p, l = classify_text("It's the best movie ever")
+print(p, l)
