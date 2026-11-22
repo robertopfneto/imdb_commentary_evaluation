@@ -1,18 +1,18 @@
 {
-    "lista_comentarios positivos": [
-        "I should see the Pelé movie",
-        "I loved watch How Train Your Dragon 3",
-        "The Good Doctor is very good",
-        "Maybe I will that American Movie",
-        "I going to take her to see Avengers"
-    ],
-
     "lista_comentarios_negativos": [
         "The Pelé movie was boring and disappointing",
         "I hated watching How to Train Your Dragon 3",
         "The Good Doctor is very bad",
         "That American movie was terrible and a waste of time",
         "I regretted taking her to see Avengers because the movie was awful"
+    ],
+    
+    "lista_comentarios positivos": [
+        "I should see the Pelé movie",
+        "I loved watch How Train Your Dragon 3",
+        "The Good Doctor is very good",
+        "Maybe I will that American Movie",
+        "I going to take her to see Avengers"
     ]
 }
 

@@ -1,6 +1,3 @@
-
-from keras.callbacks import ModelCheckpoint
-
 # Dos 25k exemplos iniciais, 15k sao para treinamento e 10k para validacao
 # epoca, batch = 512 
 # Early Stopping: quantas épocas o modelo vai aguardar sem ter nenhuma melhora
