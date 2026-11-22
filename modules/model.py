@@ -1,9 +1,28 @@
+from keras import models, optimizers, layers
 import re # expressao regular
 from typing import List
-
 import numpy as np
 
-from vetorization import vet_sequence
+from modules.vetorization import vet_sequence
+
+
+def build_model(input_data):
+    model = models.Sequential([
+        # recebe os valores de 10.000 posições e vai combinar seus valores com 16 neuronios com a função
+        layers.Dense(16, activation="relu", input_shape=(input_data, )),  # relu remove os negativos
+        layers.Dense(16, activation="relu"),  # relu remove os negativos
+        # output
+        layers.Dense(1, activation="sigmoid")
+    ])
+    
+    model.compile(
+        optimizer=optimizers.RMSprop(learning_rate=0.001),
+        loss="binary_crossentropy",
+        metrics=["accuracy"]
+    )
+    
+    return model
+
 
 # Funções para classificar texto livre
 
@@ -63,19 +82,19 @@ def text_to_imdb_indices(tokens: List[str], # Recebe o dicionário que relaciona
 # Define a preparação completa de uma frase para a entrada da rede.
 
 
-def vectorize_text(text: str, word_index: dict) -> np.ndarray:
+def vectorize_text(text: str, word_index: dict, num_words: int) -> np.ndarray:
     # Aplica a limpeza e separa as palavras.
     tokens = preprocess_text(text)
     # Converte as palavras em índices usando o dicionário do treinamento.
-    indices = text_to_imdb_indices(tokens, word_index)
+    indices = text_to_imdb_indices(tokens, word_index, num_words=num_words)
     # Retorna uma matriz com uma linha e 10.000 colunas de presença de palavras.
-    return vet_sequence([indices])
+    return vet_sequence([indices],dimension=num_words)
 
 
 # Define a classificação da frase; threshold é o limiar, por padrão 0,5.
-def classify_text(text: str, model: dict, work_index: dict, threshold: float=0.5):
+def inference(text: str, model: dict, work_index: dict, num_words: int, threshold: float=0.5):
     # Prepara a representação numérica da frase, sem informar um gabarito à rede.
-    x = vectorize_text(text, work_index)
+    x = vectorize_text(text, work_index, num_words=num_words)
     # Prevê sem treinar e extrai a estimativa da única linha e da única saída.
     proba = model.predict(x, verbose=0)[0, 0]
     # Usa positivo para estimativa maior ou igual a 0,5 e negativo para valor menor.
